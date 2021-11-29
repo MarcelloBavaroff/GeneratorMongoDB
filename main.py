@@ -93,13 +93,15 @@ class Person:
         self.name = name
         self.surname = surname
         self.birthdate = birthday
-        self.sex
+        self.sex = sex
         self.mail = mail
         self.address = address
         self.telephone = telephone
 
-        cf = name[0] + name[1] + name[2] + surname[0] + surname[1] + surname[2] + birthday[2] + birthday[3] + random.choice(
-            position9) + birthday[5] + birthday[6] + random.choice(position9) + str(random.randint(100, 999)) + random.choice(
+        cf = name[0] + name[1] + name[2] + surname[0] + surname[1] + surname[2] + birthday[2] + birthday[
+            3] + random.choice(
+            position9) + birthday[5] + birthday[6] + random.choice(position9) + str(
+            random.randint(100, 999)) + random.choice(
             position9)
 
         self.cf = cf.upper()
@@ -158,27 +160,75 @@ def generate_people(df, quantity):
     df = randomize_and_cut(df, quantity)
     ids = []
 
-    print("CREATE")
-
     for i in range(quantity):
         p = Person(df.iloc[[i]].values[0])
         ids.append(p.cf)
         people.append(p)
 
-        print("(p" + str(
-            i) + ":Person {CF:\"" + p.cf + "\", name:\"" + p.name + "\", surname: \"" + p.surname + "\", birthday:date(\"" + p.birthdate + "\"), phoneNumber:\"" + p.telephone + "\", mail:\"" + p.mail + "\",address:\"" + p.address + "\"}),")
-
     df["id"] = ids  # added the CF as column, but it's not the id
 
     return df
 
+
+def generate_certificate(quantity, db):
+    centificate_coll = db["Certificate"]
+
+    # capire come gestire la roba dei vettori come si deve
+    for i in range(quantity):
+        pers = random.choice(people)
+
+        randoc = random.choice(doctors)
+        doc1 = dbname.Doctors.find_one({"CF": randoc.cf}, {"_id": 1})
+        randinst = random.choice(institutions)
+        inst1 = dbname.Institutions.find_one({"Name": randinst.name}, {"_id": 1})
+
+        item = {
+            "Person": {
+                "CF": pers.cf,
+                "Name": pers.name,
+                "Surname": pers.surname,
+                "Birthday": pers.birthdate,
+                "Sex": pers.sex,
+                "Address": pers.address,
+                "Phone number": pers.telephone,
+                "Email": pers.mail,
+                "Emergency contact": {
+                    "Phone number": pers.telephone,
+                    "Details": "Gli piace la nutella"
+                }
+            },
+            "Vaccination": {
+                "Date": "",
+                "Place": "Hub n." + str(random.randint(1, 1000)),
+                "Valid": str(random.choice([True, False])),
+
+                "Vaccine": {
+                    "Pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
+                    "Type": "mRNA",
+                    "Batch": str(random.randint(1, 1000000)),
+                    "Production date": ""
+                },
+                "Doctor": doc1,
+                "Institution": inst1
+            },
+            "Test": {
+                "Place": "Test Center n." + str(random.randint(1, 1000)),
+                "Date": "",
+                "Result": random.choice(["Positive", "Negative"]),
+                "valid": random.choice(["Valid", "Invalid"]),
+                "Doctor": doc1,
+                "Institution": inst1
+            }
+
+        }
+        centificate_coll.insert_one(item)
+
+
 def generator(dfDoctors, dfInstitutions, dfPeople, db):
     generate_doctors(dfDoctors, 10, db)
     generate_institutions(dfInstitutions, 10, db)
-    dfPeople = generate_people(dfPeople, 50)
-
-    #place di vaccini li chiamo hub + numero generico
-    #place di test -> test center + numero
+    dfPeople = generate_people(dfPeople, 100)
+    generate_certificate(150,db)
 
 
 # ------------------------------------MAIN-----------------------------------
@@ -188,3 +238,4 @@ df_people = pd.read_csv(r'people.csv')
 dbname = get_database()
 
 generator(df_doctors, df_institutions, df_people, dbname)
+
