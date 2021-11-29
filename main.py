@@ -32,7 +32,7 @@ people = []
 
 def get_database():
     # Provide the mongodb atlas url to connect python to mongodb using pymongo
-    CONNECTION_STRING = "mongodb+srv://Bavaroff258:mysql@cluster0.9sb6c.mongodb.net/test"
+    CONNECTION_STRING = "mongodb+srv://marc:mysql@claster.lecz1.mongodb.net/test"
 
     # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
     client = MongoClient(CONNECTION_STRING)
@@ -111,6 +111,19 @@ def randomize_and_cut(df, quantity):
     return df.sample(frac=1).reset_index(drop=True).head(quantity)
 
 
+def str_time_prop(start, end, time_format, prop):
+    stime = time.mktime(time.strptime(start, time_format))
+    etime = time.mktime(time.strptime(end, time_format))
+
+    ptime = stime + prop * (etime - stime)
+
+    return time.strftime(time_format, time.localtime(ptime))
+
+
+def random_date(start, end, prop):
+    return str_time_prop(start, end, '%Y-%m-%dT%H:%M:%SZ', prop)
+
+
 def generate_doctors(df, quantity, db):
     df = randomize_and_cut(df, quantity)
     ids = []
@@ -182,6 +195,9 @@ def generate_certificate(quantity, db):
         randinst = random.choice(institutions)
         inst1 = dbname.Institutions.find_one({"Name": randinst.name}, {"_id": 1})
 
+        date = random_date("2020-2-20T00:00:00Z", "2021-11-14T00:00:00Z", random.random())
+        date2 = random_date("2020-2-20T00:00:00Z", "2021-11-14T00:00:00Z", random.random())
+
         item = {
             "Person": {
                 "CF": pers.cf,
@@ -198,7 +214,7 @@ def generate_certificate(quantity, db):
                 }
             },
             "Vaccination": {
-                "Date": "",
+                "Date": date,
                 "Place": "Hub n." + str(random.randint(1, 1000)),
                 "Valid": str(random.choice([True, False])),
 
@@ -213,7 +229,7 @@ def generate_certificate(quantity, db):
             },
             "Test": {
                 "Place": "Test Center n." + str(random.randint(1, 1000)),
-                "Date": "",
+                "Date": date2,
                 "Result": random.choice(["Positive", "Negative"]),
                 "valid": random.choice(["Valid", "Invalid"]),
                 "Doctor": doc1,
@@ -228,7 +244,7 @@ def generator(dfDoctors, dfInstitutions, dfPeople, db):
     generate_doctors(dfDoctors, 10, db)
     generate_institutions(dfInstitutions, 10, db)
     dfPeople = generate_people(dfPeople, 100)
-    generate_certificate(150,db)
+    generate_certificate(150, db)
 
 
 # ------------------------------------MAIN-----------------------------------
@@ -238,4 +254,3 @@ df_people = pd.read_csv(r'people.csv')
 dbname = get_database()
 
 generator(df_doctors, df_institutions, df_people, dbname)
-
