@@ -26,7 +26,7 @@ regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Rom
 # department issuing the vaccine = "Ambulatory" + random int
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
 
-#start_time = datetime.time(00, 00, 00)
+# start_time = datetime.time(00, 00, 00)
 
 doctors = []
 institutions = []
@@ -34,8 +34,6 @@ people = []
 
 start_date = datetime.strptime('2020-2-20T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
-
-
 
 
 def get_database():
@@ -133,7 +131,6 @@ def random_date(start, end, prop):
 
 
 def random_date2(start, end):
-
     delta = end - start
     int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
     random_second = randrange(int_delta)
@@ -214,7 +211,69 @@ def generate_certificate(quantity, db):
         date = random_date2(start_date, end_date)
         date2 = random_date2(start_date, end_date)
 
+        person = {
+            "CF": pers.cf,
+            "Name": pers.name,
+            "Surname": pers.surname,
+            "Birthday": pers.birthdate,
+            "Sex": pers.sex,
+            "Address": pers.address,
+            "Phone number": pers.telephone,
+            "Email": pers.mail,
+            "Emergency contact": {
+                "Phone number": pers.telephone,
+                "Details": "Gli piace la nutella"
+            }
+        }
+        vacc = {
+            "Date": date,
+            "Place": "Hub n." + str(random.randint(1, 1000)),
+            "Valid": str(random.choice([True, False])),
+
+            "Vaccine": {
+                "Pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
+                "Type": "mRNA",
+                "Batch": str(random.randint(1, 1000000)),
+                "Production date": "kebab"
+            },
+            "Doctor": doc1,
+            "Institution": inst1
+        }
+
+        test = {
+            "Place": "Test Center n." + str(random.randint(1, 1000)),
+            "Date": date2,
+            "Result": random.choice(["Positive", "Negative"]),  # non mettere 0,5% ma tipo 0,1
+            "valid": random.choice(["Valid", "Invalid"]),
+            "Doctor": doc1,
+            "Institution": inst1
+        }
+
         item = {
+            "Person": person,
+            "Vaccination": vacc,
+            "Test": test
+        }
+        centificate_coll.insert_one(item)
+
+
+def generator(dfDoctors, dfInstitutions, dfPeople, db):
+    generate_doctors(dfDoctors, 10, db)
+    generate_institutions(dfInstitutions, 10, db)
+    dfPeople = generate_people(dfPeople, 100)
+    generate_certificate(150, db)
+
+
+# ------------------------------------MAIN-----------------------------------
+df_doctors = pd.read_csv(r'doctors.csv')
+df_institutions = pd.read_csv(r'institutions.csv')
+df_people = pd.read_csv(r'people.csv')
+dbname = get_database()
+
+generator(df_doctors, df_institutions, df_people, dbname)
+
+'''
+item = {
             "Person": {
                 "CF": pers.cf,
                 "Name": pers.name,
@@ -252,22 +311,4 @@ def generate_certificate(quantity, db):
                 "Institution": inst1
             }
 
-        }
-        centificate_coll.insert_one(item)
-
-
-def generator(dfDoctors, dfInstitutions, dfPeople, db):
-    generate_doctors(dfDoctors, 10, db)
-    generate_institutions(dfInstitutions, 10, db)
-    dfPeople = generate_people(dfPeople, 100)
-    generate_certificate(150, db)
-
-
-# ------------------------------------MAIN-----------------------------------
-df_doctors = pd.read_csv(r'doctors.csv')
-df_institutions = pd.read_csv(r'institutions.csv')
-df_people = pd.read_csv(r'people.csv')
-dbname = get_database()
-
-generator(df_doctors, df_institutions, df_people, dbname)
-
+        }'''
