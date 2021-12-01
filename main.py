@@ -1,8 +1,11 @@
 import pandas as pd
 import numpy as np
 import random
+from random import randrange
 import time
 import datetime
+from datetime import timedelta
+from datetime import datetime
 import pymongo
 from pymongo import MongoClient
 import dateutil
@@ -23,11 +26,16 @@ regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Rom
 # department issuing the vaccine = "Ambulatory" + random int
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
 
-start_time = datetime.time(00, 00, 00)
+#start_time = datetime.time(00, 00, 00)
 
 doctors = []
 institutions = []
 people = []
+
+start_date = datetime.strptime('2020-2-20T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
+end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
+
+
 
 
 def get_database():
@@ -121,7 +129,15 @@ def str_time_prop(start, end, time_format, prop):
 
 
 def random_date(start, end, prop):
-    return str_time_prop(start, end, '%Y-%m-%dT%H:%M:%SZ', prop)
+    return str_time_prop(start, end, '%Y-%m-%dT%H:%M:%S.000+00:00', prop)
+
+
+def random_date2(start, end):
+
+    delta = end - start
+    int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
+    random_second = randrange(int_delta)
+    return start + timedelta(seconds=random_second)
 
 
 def generate_doctors(df, quantity, db):
@@ -191,12 +207,12 @@ def generate_certificate(quantity, db):
         pers = random.choice(people)
 
         randoc = random.choice(doctors)
-        doc1 = dbname.Doctors.find_one({"CF": randoc.cf}, {"_id": 1})
+        doc1 = db.Doctors.find_one({"CF": randoc.cf}, {"_id": 1})
         randinst = random.choice(institutions)
-        inst1 = dbname.Institutions.find_one({"Name": randinst.name}, {"_id": 1})
+        inst1 = db.Institutions.find_one({"Name": randinst.name}, {"_id": 1})
 
-        date = random_date("2020-2-20T00:00:00Z", "2021-11-14T00:00:00Z", random.random())
-        date2 = random_date("2020-2-20T00:00:00Z", "2021-11-14T00:00:00Z", random.random())
+        date = random_date2(start_date, end_date)
+        date2 = random_date2(start_date, end_date)
 
         item = {
             "Person": {
@@ -230,7 +246,7 @@ def generate_certificate(quantity, db):
             "Test": {
                 "Place": "Test Center n." + str(random.randint(1, 1000)),
                 "Date": date2,
-                "Result": random.choice(["Positive", "Negative"]),
+                "Result": random.choice(["Positive", "Negative"]),  # non mettere 0,5% ma tipo 0,1
                 "valid": random.choice(["Valid", "Invalid"]),
                 "Doctor": doc1,
                 "Institution": inst1
@@ -254,3 +270,4 @@ df_people = pd.read_csv(r'people.csv')
 dbname = get_database()
 
 generator(df_doctors, df_institutions, df_people, dbname)
+

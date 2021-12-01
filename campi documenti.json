@@ -1,0 +1,77 @@
+DOCTOR{
+	"_id":ObjectId,
+	"cf":String,
+	"name":String,
+	"surname":String,
+	"phone_number":String,
+	"email":String,
+	"role":ENUM (...)
+}
+
+CERTIFICATE{
+	"_id":ObjectId,
+	
+	"PERSON":Object,
+	"VACCINATION[]":Object,
+	"TEST[]":Object
+}
+
+PERSON{
+	"cf":String,
+	"name":String,
+	"surname":String,
+	"birthdate":Date,
+	"sex":ENUM,(M,F)
+	"address":String,
+	"phone_number":String,
+	"email":String,
+	
+	"EMERGENCY_CONTACT": Object
+}
+
+EMERGENCY_CONTACT{
+	"phone_number":String,
+	"details":String
+}
+
+VACCINATION{
+	"date_performed":Date,
+	"duration": int,  //1 primo, 6 altri
+	"place":String,
+	"valid":Boolean, //true/false tutto minuscolo
+	
+	"VACCINE":Object,
+	
+	"<Doctor>[]":ObjectId,
+	"<Institution>":ObjectId
+}
+
+VACCINE{
+
+	"pharma":String,
+	"type":ENUM,("mRNA","viral vector")
+	"batch":String,
+	"production_date":Date
+}
+
+TEST{
+	
+	"place":String,
+	"date_performed":Date,
+	"duration": int, // 2 sempre
+	"result":ENUM,("positive","negative")
+	"valid":Boolean, //true/false tutto minuscolo
+	
+	"<Doctor>[]":ObjectId,
+	"<Institution>":ObjectId
+}
+
+INSTITUTION{
+	"_id":ObjectId,
+	"name":String,
+	"coordinates":String,
+	"type":ENUM,("hospital",...)
+	"department":ENUM, (...)
+	"region":String
+}
+
