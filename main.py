@@ -34,6 +34,8 @@ people = []
 
 start_date = datetime.strptime('2020-2-20T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
+# unique for all vaccine
+production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
 
 def get_database():
@@ -149,12 +151,12 @@ def generate_doctors(df, quantity, db):
         doctors.append(d)
 
         item = {
-            "CF": d.cf,
-            "Name": d.name,
-            "Surname": d.surname,
-            "Phone_number": d.telephone,
-            "Mail": d.mail,
-            "Role": d.role
+            "cf": d.cf,
+            "name": d.name,
+            "surname": d.surname,
+            "phone_number": d.telephone,
+            "mail": d.mail,
+            "role": d.role
         }
         doctors_coll.insert_one(item)
 
@@ -173,11 +175,11 @@ def generate_institutions(df, quantity, db):
         institutions.append(ins)
 
         item = {
-            "Name": ins.name,
-            "Coordinates": ins.coordinates,
-            "Type": ins.type,
-            "Department": ins.department,
-            "Region": ins.region
+            "name": ins.name,
+            "coordinates": ins.coordinates,
+            "type": ins.type,
+            "department": ins.department,
+            "region": ins.region
         }
         institutions_coll.insert_one(item)
 
@@ -212,47 +214,49 @@ def generate_certificate(quantity, db):
         date2 = random_date2(start_date, end_date)
 
         person = {
-            "CF": pers.cf,
-            "Name": pers.name,
-            "Surname": pers.surname,
-            "Birthday": pers.birthdate,
-            "Sex": pers.sex,
-            "Address": pers.address,
-            "Phone number": pers.telephone,
-            "Email": pers.mail,
-            "Emergency contact": {
-                "Phone number": pers.telephone,
-                "Details": "Gli piace la nutella"
+            "cf": pers.cf,
+            "name": pers.name,
+            "surname": pers.surname,
+            "birthdate": pers.birthdate,
+            "sex": pers.sex,
+            "address": pers.address,
+            "phone_number": pers.telephone,
+            "email": pers.mail,
+            "EMERGENCY_CONTACT": {
+                "phone_number": pers.telephone,
+                "details": "Gli piace la nutella"
             }
         }
-        vacc = {
-            "Date": date,
-            "Place": "Hub n." + str(random.randint(1, 1000)),
-            "Valid": str(random.choice([True, False])),
+        vaccination = {
+            "date_performed": date,
+            "duration": 1,
+            "place": "Hub n." + str(random.randint(1, 1000)),
+            "valid": bool(random.choice(["true", "false"])),
 
-            "Vaccine": {
-                "Pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
-                "Type": "mRNA",
-                "Batch": str(random.randint(1, 1000000)),
-                "Production date": "kebab"
+            "VACCINE": {
+                "pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
+                "type": "mRNA",
+                "batch": str(random.randint(1, 1000000)),
+                "production_date": production_date
             },
             "Doctor": doc1,
             "Institution": inst1
         }
 
         test = {
-            "Place": "Test Center n." + str(random.randint(1, 1000)),
-            "Date": date2,
-            "Result": random.choice(["Positive", "Negative"]),  # non mettere 0,5% ma tipo 0,1
-            "valid": random.choice(["Valid", "Invalid"]),
+            "place": "Test Center n." + str(random.randint(1, 1000)),
+            "date_performed": date2,
+            "duration": 2,
+            "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
+            "valid": bool(random.choice(["true", "false"])),
             "Doctor": doc1,
             "Institution": inst1
         }
 
         item = {
-            "Person": person,
-            "Vaccination": vacc,
-            "Test": test
+            "PERSON": person,
+            "VACCINATION": vaccination,
+            "TEST": test
         }
         centificate_coll.insert_one(item)
 
