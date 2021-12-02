@@ -206,12 +206,16 @@ def generate_certificate(quantity, db):
         pers = random.choice(people)
 
         randoc = random.choice(doctors)
-        doc1 = db.Doctors.find_one({"CF": randoc.cf}, {"_id": 1})
+        doc1 = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
+        randoc = random.choice(doctors)
+        doc2 = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
         randinst = random.choice(institutions)
-        inst1 = db.Institutions.find_one({"Name": randinst.name}, {"_id": 1})
+        inst1 = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
 
         date = random_date2(start_date, end_date)
         date2 = random_date2(start_date, end_date)
+
+        ddd = [doc1, doc2]
 
         person = {
             "cf": pers.cf,
@@ -239,7 +243,7 @@ def generate_certificate(quantity, db):
                 "batch": str(random.randint(1, 1000000)),
                 "production_date": production_date
             },
-            "Doctor": doc1,
+            "Doctor": ddd,
             "Institution": inst1
         }
 
