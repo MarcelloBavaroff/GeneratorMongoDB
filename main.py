@@ -6,13 +6,14 @@ import time
 import datetime
 from datetime import timedelta
 from datetime import datetime
-import pymongo
 from pymongo import MongoClient
-import dateutil
-from dateutil import parser
+import sys
 
-# PER STAMPARE SU FILE: python generator.py > nomefile.txt
-# verrà generato nella cartella in cui si runna
+
+local_mode = False
+if len(sys.argv) > 1:
+    if sys.argv[1] == "-local":
+        local_mode = True
 
 position9 = np.array(['A', 'B', 'C', 'D', 'E', 'H', 'L', 'M', 'P', 'R', 'S', 'T'])
 
@@ -40,10 +41,13 @@ production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%
 
 def get_database():
     # Provide the mongodb atlas url to connect python to mongodb using pymongo
-    CONNECTION_STRING = "mongodb+srv://marc:mysql@claster.lecz1.mongodb.net/test"
+    connection_string = "mongodb+srv://marc:mysql@claster.lecz1.mongodb.net/test"
 
     # Create a connection using MongoClient. You can import MongoClient or use pymongo.MongoClient
-    client = MongoClient(CONNECTION_STRING)
+    if local_mode:
+        client = MongoClient("localhost", 27017)
+    else:
+        client = MongoClient(connection_string)
 
     # Create the database for our example (we will use the same database throughout the tutorial
     return client['Coviddi']
@@ -145,6 +149,8 @@ def generate_doctors(df, quantity, db):
 
     doctors_coll = db["Doctors"]
 
+    doctors_coll.drop()
+
     for i in range(quantity):
         d = Doctor(df.iloc[[i]].values[0])
         ids.append(d.cf)
@@ -169,6 +175,8 @@ def generate_institutions(df, quantity, db):
     df = randomize_and_cut(df, quantity)
 
     institutions_coll = db["Institutions"]
+
+    institutions_coll.drop()
 
     for i in range(quantity):
         ins = Institution(df.iloc[[i]].values[0])
@@ -200,6 +208,8 @@ def generate_people(df, quantity):
 
 def generate_certificate(quantity, db):
     centificate_coll = db["Certificate"]
+
+    centificate_coll.drop()
 
     # capire come gestire la roba dei vettori come si deve
     for i in range(quantity):
