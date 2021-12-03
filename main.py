@@ -245,7 +245,7 @@ def generate_certificate(quantity, db):
             "date_performed": date,
             "duration": 1,
             "place": "Hub n." + str(random.randint(1, 1000)),
-            "valid": bool(random.choice(["true", "false"])),
+            "valid": random.choice(["true", "false"]),
 
             "VACCINE": {
                 "pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
@@ -262,17 +262,19 @@ def generate_certificate(quantity, db):
             "date_performed": date2,
             "duration": 2,
             "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
-            "valid": bool(random.choice(["true", "false"])),
+            "valid": random.choice(["true", "false"]),
             "Doctor": doc1,
             "Institution": inst1
         }
 
         item = {
             "PERSON": person,
-            "VACCINATION": vaccination,
-            "TEST": test
+            "VACCINATION": [vaccination],
+            "TEST": [test]
         }
         centificate_coll.insert_one(item)
+
+        print(vaccination["valid"])
 
 
 def generator(dfDoctors, dfInstitutions, dfPeople, db):
