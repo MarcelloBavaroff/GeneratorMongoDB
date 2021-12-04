@@ -264,7 +264,7 @@ def coll_vacc(db):
                 "batch": str(random.randint(1, 1000000)),
                 "production_date": production_date
             },
-            "Doctor": [working_doctors(db)],
+            "Doctor": working_doctors(db),
             "Institution": inst
         }
         vaccinations.append(vaccination)
@@ -287,7 +287,7 @@ def coll_vacc(db):
                     "batch": str(random.randint(1, 1000000)),
                     "production_date": production_date
                 },
-                "Doctor": [working_doctors(db)],
+                "Doctor": working_doctors(db),
                 "Institution": inst
             }
             nextdate = nextdate + timedelta(days=180)
@@ -313,7 +313,7 @@ def coll_test(db):
             "duration": 2,
             "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
             "valid": random.choice(["true", "false"]),
-            "Doctor": [working_doctors(db)],
+            "Doctor": working_doctors(db),
             "Institution": inst
         }
         tests.append(test)
@@ -332,8 +332,8 @@ def generate_certificate(quantity, db):
 
         item = {
             "PERSON": coll_person(people[i]),
-            "VACCINATION": [coll_vacc(db)],
-            "TEST": [coll_test(db)]
+            "VACCINATION": coll_vacc(db),
+            "TEST": coll_test(db)
         }
         centificate_coll.insert_one(item)
 
