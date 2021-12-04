@@ -4,7 +4,6 @@ import random
 from random import randrange
 import time
 import datetime
-from datetime import timedelta
 from datetime import datetime
 from datetime import timedelta
 from pymongo import MongoClient
@@ -27,7 +26,6 @@ regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Rom
 
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
 
-# start_time = datetime.time(00, 00, 00)
 
 doctors = []
 institutions = []
@@ -258,7 +256,7 @@ def coll_vacc(db):
             "date_performed": date,
             "duration": 1,
             "place": "Hub n." + str(random.randint(1, 1000)),
-            "valid": random.choice(["true", "false"]),
+            "valid": "true",
 
             "VACCINE": {
                 "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
