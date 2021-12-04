@@ -9,7 +9,6 @@ from datetime import datetime
 from pymongo import MongoClient
 import sys
 
-
 local_mode = False
 if len(sys.argv) > 1:
     if sys.argv[1] == "-local":
@@ -24,7 +23,7 @@ roles = np.array(["Primary", "Intern", "Vaccinator"])
 regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna", "Fiuli Venezia Giulia",
                     "Lazio", "Liguria", "Lombardia", "Marche", "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia",
                     "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto", "Regno supremo Bavaroff"])
-# department issuing the vaccine = "Ambulatory" + random int
+
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
 
 # start_time = datetime.time(00, 00, 00)
@@ -35,6 +34,7 @@ people = []
 
 start_date = datetime.strptime('2020-2-20T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
+
 # unique for all vaccine
 production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
@@ -206,14 +206,109 @@ def generate_people(df, quantity):
     return df
 
 
+def coll_person(pers):
+    person = {
+        "cf": pers.cf,
+        "name": pers.name,
+        "surname": pers.surname,
+        "birthdate": pers.birthdate,
+        "sex": pers.sex,
+        "address": pers.address,
+        "phone_number": pers.telephone,
+        "email": pers.mail,
+        "EMERGENCY_CONTACT": {
+            "phone_number": pers.telephone,
+            "details": "Gli piace la nutella"
+        }
+    }
+    return person
+
+
+def coll_vacc(db):
+    n_doses = random.randint(0, 3)
+    vaccinations = []
+
+    if n_doses == 0:
+        vaccination = {}
+        vaccinations.append(vaccination)
+
+    else:
+        date = random_date2(start_date, end_date)
+        n_doctors = random.randint(1, 3)
+        vacc_doctors = []
+
+        randinst = random.choice(institutions)
+        inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+
+        for i in range(n_doctors):
+            randoc = random.choice(doctors)
+            doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
+            vacc_doctors.append(doc)
+
+        vaccination = {
+            "date_performed": date,
+            "duration": 1,
+            "place": "Hub n." + str(random.randint(1, 1000)),
+            "valid": random.choice(["true", "false"]),
+
+            "VACCINE": {
+                "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
+                "type": random.choice(["mRNA", "viral vector"]),
+                "batch": str(random.randint(1, 1000000)),
+                "production_date": production_date
+            },
+            "Doctor": vacc_doctors,
+            "Institution": inst
+        }
+        vaccinations.append(vaccination)
+
+        #ottimizzabile
+        nextdate = date + datetime.timedelta(days=30)
+        for i in range(n_doses - 1):
+            n_doctors = random.randint(1, 3)
+            vacc_doctors.clear()
+
+            randinst = random.choice(institutions)
+            inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+
+            for j in range(n_doctors):
+                randoc = random.choice(doctors)
+                doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
+                vacc_doctors.append(doc)
+
+            vaccination2 = {
+                "date_performed": nextdate,
+                "duration": 6,
+                "place": "Hub n." + str(random.randint(1, 1000)),
+                "valid": random.choice(["true", "false"]),
+
+                "VACCINE": {
+                    "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
+                    "type": random.choice(["mRNA", "viral vector"]),
+                    "batch": str(random.randint(1, 1000000)),
+                    "production_date": production_date
+                },
+                "Doctor": vacc_doctors,
+                "Institution": inst
+            }
+            nextdate = nextdate + datetime.timedelta(days=180)
+            vaccinations.append(vaccination2)
+
+    return vaccinations
+
+
+#se non c'è un
+def coll_test(db):
+    print()
+
 def generate_certificate(quantity, db):
     centificate_coll = db["Certificate"]
 
     centificate_coll.drop()
 
-    # capire come gestire la roba dei vettori come si deve
+    # for each person in the database
     for i in range(quantity):
-        pers = random.choice(people)
+        # pers = random.choice(people)
 
         randoc = random.choice(doctors)
         doc1 = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
@@ -227,20 +322,6 @@ def generate_certificate(quantity, db):
 
         ddd = [doc1, doc2]
 
-        person = {
-            "cf": pers.cf,
-            "name": pers.name,
-            "surname": pers.surname,
-            "birthdate": pers.birthdate,
-            "sex": pers.sex,
-            "address": pers.address,
-            "phone_number": pers.telephone,
-            "email": pers.mail,
-            "EMERGENCY_CONTACT": {
-                "phone_number": pers.telephone,
-                "details": "Gli piace la nutella"
-            }
-        }
         vaccination = {
             "date_performed": date,
             "duration": 1,
@@ -268,8 +349,8 @@ def generate_certificate(quantity, db):
         }
 
         item = {
-            "PERSON": person,
-            "VACCINATION": [vaccination],
+            "PERSON": coll_person(people[i]),
+            "VACCINATION": [coll_vacc(db)],
             "TEST": [test]
         }
         centificate_coll.insert_one(item)
@@ -278,10 +359,11 @@ def generate_certificate(quantity, db):
 
 
 def generator(dfDoctors, dfInstitutions, dfPeople, db):
+    n_people = 100
     generate_doctors(dfDoctors, 10, db)
     generate_institutions(dfInstitutions, 10, db)
-    dfPeople = generate_people(dfPeople, 100)
-    generate_certificate(150, db)
+    dfPeople = generate_people(dfPeople, n_people)
+    generate_certificate(n_people, db)
 
 
 # ------------------------------------MAIN-----------------------------------
