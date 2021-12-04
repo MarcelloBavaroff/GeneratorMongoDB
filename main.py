@@ -6,6 +6,7 @@ import time
 import datetime
 from datetime import timedelta
 from datetime import datetime
+from datetime import timedelta
 from pymongo import MongoClient
 import sys
 
@@ -291,7 +292,7 @@ def coll_vacc(db):
                 "Doctor": [working_doctors(db)],
                 "Institution": inst
             }
-            nextdate = nextdate + datetime.timedelta(days=180)
+            nextdate = nextdate + timedelta(days=180)
             vaccinations.append(vaccination2)
 
     return vaccinations
@@ -318,6 +319,8 @@ def coll_test(db):
             "Institution": inst
         }
         tests.append(test)
+
+    return tests
 
 
 def generate_certificate(quantity, db):
@@ -353,43 +356,3 @@ dbname = get_database()
 
 generator(df_doctors, df_institutions, df_people, dbname)
 
-'''
-item = {
-            "Person": {
-                "CF": pers.cf,
-                "Name": pers.name,
-                "Surname": pers.surname,
-                "Birthday": pers.birthdate,
-                "Sex": pers.sex,
-                "Address": pers.address,
-                "Phone number": pers.telephone,
-                "Email": pers.mail,
-                "Emergency contact": {
-                    "Phone number": pers.telephone,
-                    "Details": "Gli piace la nutella"
-                }
-            },
-            "Vaccination": {
-                "Date": date,
-                "Place": "Hub n." + str(random.randint(1, 1000)),
-                "Valid": str(random.choice([True, False])),
-
-                "Vaccine": {
-                    "Pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
-                    "Type": "mRNA",
-                    "Batch": str(random.randint(1, 1000000)),
-                    "Production date": ""
-                },
-                "Doctor": doc1,
-                "Institution": inst1
-            },
-            "Test": {
-                "Place": "Test Center n." + str(random.randint(1, 1000)),
-                "Date": date2,
-                "Result": random.choice(["Positive", "Negative"]),  # non mettere 0,5% ma tipo 0,1
-                "valid": random.choice(["Valid", "Invalid"]),
-                "Doctor": doc1,
-                "Institution": inst1
-            }
-
-        }'''
