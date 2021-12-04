@@ -38,6 +38,8 @@ end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S
 # unique for all vaccine
 production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
+unvaccinated = 0
+
 
 def get_database():
     # Provide the mongodb atlas url to connect python to mongodb using pymongo
@@ -206,6 +208,17 @@ def generate_people(df, quantity):
     return df
 
 
+def working_doctors(db):
+    n_doctors = random.randint(1, 3)
+    vacc_doctors = []
+    for i in range(n_doctors):
+        randoc = random.choice(doctors)
+        doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
+        vacc_doctors.append(doc)
+
+    return vacc_doctors
+
+
 def coll_person(pers):
     person = {
         "cf": pers.cf,
@@ -229,21 +242,16 @@ def coll_vacc(db):
     vaccinations = []
 
     if n_doses == 0:
+        unvaccinated = 1
         vaccination = {}
         vaccinations.append(vaccination)
 
     else:
+        unvaccinated = 0
         date = random_date2(start_date, end_date)
-        n_doctors = random.randint(1, 3)
-        vacc_doctors = []
 
         randinst = random.choice(institutions)
         inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
-
-        for i in range(n_doctors):
-            randoc = random.choice(doctors)
-            doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
-            vacc_doctors.append(doc)
 
         vaccination = {
             "date_performed": date,
@@ -257,24 +265,16 @@ def coll_vacc(db):
                 "batch": str(random.randint(1, 1000000)),
                 "production_date": production_date
             },
-            "Doctor": vacc_doctors,
+            "Doctor": [working_doctors(db)],
             "Institution": inst
         }
         vaccinations.append(vaccination)
 
-        #ottimizzabile
-        nextdate = date + datetime.timedelta(days=30)
+        # ottimizzabile
+        nextdate = date + timedelta(days=30)
         for i in range(n_doses - 1):
-            n_doctors = random.randint(1, 3)
-            vacc_doctors.clear()
-
             randinst = random.choice(institutions)
             inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
-
-            for j in range(n_doctors):
-                randoc = random.choice(doctors)
-                doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
-                vacc_doctors.append(doc)
 
             vaccination2 = {
                 "date_performed": nextdate,
@@ -288,7 +288,7 @@ def coll_vacc(db):
                     "batch": str(random.randint(1, 1000000)),
                     "production_date": production_date
                 },
-                "Doctor": vacc_doctors,
+                "Doctor": [working_doctors(db)],
                 "Institution": inst
             }
             nextdate = nextdate + datetime.timedelta(days=180)
@@ -297,9 +297,28 @@ def coll_vacc(db):
     return vaccinations
 
 
-#se non c'è un
+# unvaccinated vale 1 se non è vaccinato e lo sommo al numero di test cpsì che ce ne sia almeno 1
 def coll_test(db):
-    print()
+    n_tests = random.randint(0, 10) + unvaccinated
+    tests = []
+
+    for i in range(n_tests):
+
+        date = random_date2(start_date, end_date)
+        randinst = random.choice(institutions)
+        inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+
+        test = {
+            "place": "Test Center n." + str(random.randint(1, 1000)),
+            "date_performed": date,
+            "duration": 2,
+            "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
+            "valid": random.choice(["true", "false"]),
+            "Doctor": [working_doctors(db)],
+            "Institution": inst
+        }
+        tests.append(test)
+
 
 def generate_certificate(quantity, db):
     centificate_coll = db["Certificate"]
@@ -310,52 +329,12 @@ def generate_certificate(quantity, db):
     for i in range(quantity):
         # pers = random.choice(people)
 
-        randoc = random.choice(doctors)
-        doc1 = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
-        randoc = random.choice(doctors)
-        doc2 = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
-        randinst = random.choice(institutions)
-        inst1 = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
-
-        date = random_date2(start_date, end_date)
-        date2 = random_date2(start_date, end_date)
-
-        ddd = [doc1, doc2]
-
-        vaccination = {
-            "date_performed": date,
-            "duration": 1,
-            "place": "Hub n." + str(random.randint(1, 1000)),
-            "valid": random.choice(["true", "false"]),
-
-            "VACCINE": {
-                "pharma": str(random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"])),
-                "type": "mRNA",
-                "batch": str(random.randint(1, 1000000)),
-                "production_date": production_date
-            },
-            "Doctor": ddd,
-            "Institution": inst1
-        }
-
-        test = {
-            "place": "Test Center n." + str(random.randint(1, 1000)),
-            "date_performed": date2,
-            "duration": 2,
-            "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
-            "valid": random.choice(["true", "false"]),
-            "Doctor": doc1,
-            "Institution": inst1
-        }
-
         item = {
             "PERSON": coll_person(people[i]),
             "VACCINATION": [coll_vacc(db)],
-            "TEST": [test]
+            "TEST": [coll_test(db)]
         }
         centificate_coll.insert_one(item)
-
-        print(vaccination["valid"])
 
 
 def generator(dfDoctors, dfInstitutions, dfPeople, db):
