@@ -256,7 +256,7 @@ def coll_vacc(db):
             "date_performed": date,
             "duration": 1,
             "place": "Hub n." + str(random.randint(1, 1000)),
-            "valid": "true",
+            "valid": bool(1),
 
             "VACCINE": {
                 "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
@@ -279,7 +279,7 @@ def coll_vacc(db):
                 "date_performed": nextdate,
                 "duration": 6,
                 "place": "Hub n." + str(random.randint(1, 1000)),
-                "valid": random.choice(["true", "false"]),
+                "valid": bool(random.randint(0, 1)),
 
                 "VACCINE": {
                     "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
@@ -312,7 +312,7 @@ def coll_test(db):
             "date_performed": date,
             "duration": 2,
             "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
-            "valid": random.choice(["true", "false"]),
+            "valid": bool(random.randint(0,1)),
             "Doctor": working_doctors(db),
             "Institution": inst
         }
