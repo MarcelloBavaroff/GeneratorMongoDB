@@ -305,6 +305,7 @@ def coll_test(db):
         date = date + timedelta(days=random.randint(2, 365))
         randinst = random.choice(institutions)
         inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+        inst = inst["_id"]
 
         test = {
             "place": "Test Center n." + str(random.randint(1, 1000)),
