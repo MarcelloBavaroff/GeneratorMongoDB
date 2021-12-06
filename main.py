@@ -17,15 +17,14 @@ if len(sys.argv) > 1:
 position9 = np.array(['A', 'B', 'C', 'D', 'E', 'H', 'L', 'M', 'P', 'R', 'S', 'T'])
 
 # Doctors
-roles = np.array(["Primary", "Intern", "Vaccinator"])
+roles = np.array(["Primary", "Intern", "Assistant"])
 
 # Institutions
 regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Romagna", "Fiuli Venezia Giulia",
                     "Lazio", "Liguria", "Lombardia", "Marche", "Molise", "Piemonte", "Puglia", "Sardegna", "Sicilia",
-                    "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto", "Regno supremo Bavaroff"])
+                    "Toscana", "Trentino-Alto Adige", "Umbria", "Valle d'Aosta", "Veneto"])
 
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
-
 
 doctors = []
 institutions = []
@@ -133,10 +132,6 @@ def str_time_prop(start, end, time_format, prop):
     return time.strftime(time_format, time.localtime(ptime))
 
 
-def random_date(start, end, prop):
-    return str_time_prop(start, end, '%Y-%m-%dT%H:%M:%S.000+00:00', prop)
-
-
 def random_date2(start, end):
     delta = end - start
     int_delta = (delta.days * 24 * 60 * 60) + delta.seconds
@@ -213,7 +208,7 @@ def working_doctors(db):
     for i in range(n_doctors):
         randoc = random.choice(doctors)
         doc = db.Doctors.find_one({"cf": randoc.cf}, {"_id": 1})
-        vacc_doctors.append(doc)
+        vacc_doctors.append(doc["_id"])
 
     return vacc_doctors
 
@@ -230,7 +225,7 @@ def coll_person(pers):
         "email": pers.mail,
         "EMERGENCY_CONTACT": {
             "phone_number": pers.telephone,
-            "details": "Gli piace la nutella"
+            "details": "Null"
         }
     }
     return person
@@ -240,23 +235,48 @@ def coll_vacc(db):
     n_doses = random.randint(0, 3)
     vaccinations = []
 
+
     if n_doses == 0:
         unvaccinated = 1
-        vaccination = {}
-        vaccinations.append(vaccination)
+        return vaccinations
 
-    else:
-        unvaccinated = 0
-        date = random_date2(start_date, end_date)
+    unvaccinated = 0
+    date = random_date2(start_date, end_date)
 
+    randinst = random.choice(institutions)
+    inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+    inst = inst["_id"]
+
+
+    vaccination = {
+        "date_performed": date,
+        "duration": 1,
+        "place": "Hub n." + str(random.randint(1, 1000)),
+        "valid": bool(1),
+
+        "VACCINE": {
+            "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
+            "type": random.choice(["mRNA", "viral vector"]),
+            "batch": str(random.randint(1, 1000000)),
+            "production_date": production_date
+        },
+        "Doctor": working_doctors(db),
+        "Institution": inst
+    }
+    vaccinations.append(vaccination)
+
+    # ottimizzabile
+    nextdate = date + timedelta(days=30)
+    for i in range(n_doses - 1):
         randinst = random.choice(institutions)
         inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
+        inst = inst["_id"]
 
-        vaccination = {
-            "date_performed": date,
-            "duration": 1,
+        vaccination2 = {
+            "date_performed": nextdate,
+            "duration": 6,
             "place": "Hub n." + str(random.randint(1, 1000)),
-            "valid": bool(1),
+            "valid": bool(random.randint(0, 1)),
 
             "VACCINE": {
                 "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
@@ -267,31 +287,8 @@ def coll_vacc(db):
             "Doctor": working_doctors(db),
             "Institution": inst
         }
-        vaccinations.append(vaccination)
-
-        # ottimizzabile
-        nextdate = date + timedelta(days=30)
-        for i in range(n_doses - 1):
-            randinst = random.choice(institutions)
-            inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
-
-            vaccination2 = {
-                "date_performed": nextdate,
-                "duration": 6,
-                "place": "Hub n." + str(random.randint(1, 1000)),
-                "valid": bool(random.randint(0, 1)),
-
-                "VACCINE": {
-                    "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
-                    "type": random.choice(["mRNA", "viral vector"]),
-                    "batch": str(random.randint(1, 1000000)),
-                    "production_date": production_date
-                },
-                "Doctor": working_doctors(db),
-                "Institution": inst
-            }
-            nextdate = nextdate + timedelta(days=180)
-            vaccinations.append(vaccination2)
+        nextdate = nextdate + timedelta(days=180)
+        vaccinations.append(vaccination2)
 
     return vaccinations
 
@@ -301,9 +298,11 @@ def coll_test(db):
     n_tests = random.randint(0, 10) + unvaccinated
     tests = []
 
+    date = random_date2(start_date, end_date)
+
     for i in range(n_tests):
 
-        date = random_date2(start_date, end_date)
+        date = date + timedelta(days=random.randint(2, 365))
         randinst = random.choice(institutions)
         inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
 
@@ -312,7 +311,7 @@ def coll_test(db):
             "date_performed": date,
             "duration": 2,
             "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
-            "valid": bool(random.randint(0,1)),
+            "valid": bool(random.randint(0, 1)),
             "Doctor": working_doctors(db),
             "Institution": inst
         }
@@ -353,4 +352,3 @@ df_people = pd.read_csv(r'people.csv')
 dbname = get_database()
 
 generator(df_doctors, df_institutions, df_people, dbname)
-
