@@ -37,6 +37,7 @@ end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S
 production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
 unvaccinated = 0
+probability_of_positive = 0.1
 
 
 def get_database():
@@ -50,7 +51,7 @@ def get_database():
         client = MongoClient(connection_string)
 
     # Create the database for our example (we will use the same database throughout the tutorial
-    return client['Coviddi']
+    return client['Coviddi2']
 
 
 class Doctor:
@@ -235,7 +236,6 @@ def coll_vacc(db):
     n_doses = random.randint(0, 3)
     vaccinations = []
 
-
     if n_doses == 0:
         unvaccinated = 1
         return vaccinations
@@ -247,10 +247,10 @@ def coll_vacc(db):
     inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
     inst = inst["_id"]
 
-
     vaccination = {
         "date_performed": date,
-        "duration": 1,
+        #"duration": 1,
+        "expiration_date": date + timedelta(days=30),
         "place": "Hub n." + str(random.randint(1, 1000)),
         "valid": bool(1),
 
@@ -274,7 +274,8 @@ def coll_vacc(db):
 
         vaccination2 = {
             "date_performed": nextdate,
-            "duration": 6,
+            #"duration": 6,
+            "expiration_date": date + timedelta(days=180),
             "place": "Hub n." + str(random.randint(1, 1000)),
             "valid": bool(random.randint(0, 1)),
 
@@ -287,7 +288,8 @@ def coll_vacc(db):
             "Doctor": working_doctors(db),
             "Institution": inst
         }
-        nextdate = nextdate + timedelta(days=180)
+        #next dose at most 20 days after the expiration date of the previous one
+        nextdate = nextdate + timedelta(days=random.randint(170, 200))
         vaccinations.append(vaccination2)
 
     return vaccinations
@@ -301,17 +303,23 @@ def coll_test(db):
     date = random_date2(start_date, end_date)
 
     for i in range(n_tests):
-
-        date = date + timedelta(days=random.randint(2, 365))
+        #date of the next test
+        date = date + timedelta(days=random.randint(2, 100))
         randinst = random.choice(institutions)
         inst = db.Institutions.find_one({"name": randinst.name}, {"_id": 1})
         inst = inst["_id"]
 
+        if (random.uniform(0, 1) > probability_of_positive):
+            result = "negative"
+        else:
+            result = "positive"
+
         test = {
             "place": "Test Center n." + str(random.randint(1, 1000)),
             "date_performed": date,
-            "duration": 2,
-            "result": random.choice(["positive", "negative"]),  # non mettere 0,5% ma tipo 0,1
+            #"duration": 2,
+            "expiration_date": date + timedelta(days=2),
+            "result": result,  # non mettere 0,5% ma tipo 0,1
             "valid": bool(random.randint(0, 1)),
             "Doctor": working_doctors(db),
             "Institution": inst
@@ -339,9 +347,12 @@ def generate_certificate(quantity, db):
 
 
 def generator(dfDoctors, dfInstitutions, dfPeople, db):
-    n_people = 100
-    generate_doctors(dfDoctors, 10, db)
-    generate_institutions(dfInstitutions, 10, db)
+    n_people = 500          # max 1000
+    n_doctors = 20          # max 50
+    n_institutions = 40     # max 50
+
+    generate_doctors(dfDoctors, n_doctors, db)
+    generate_institutions(dfInstitutions, n_institutions, db)
     dfPeople = generate_people(dfPeople, n_people)
     generate_certificate(n_people, db)
 
