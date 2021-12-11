@@ -1,0 +1,15 @@
+{
+    "cf": "",
+    "name": "",
+    "surname": "",
+    "birthdate": "",
+    "sex": "",
+    "address": "",
+    "phone_number": "",
+    "email": "",
+    "EMERGENCY_CONTACT": 
+    {
+        "phone_number": "",
+        "details": ""
+    }
+}
