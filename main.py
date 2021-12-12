@@ -26,6 +26,10 @@ regions = np.array(["Abruzzo", "Basilicata", "Calabria", "Campania", "Emilia-Rom
 
 type_of_institution = np.array(["Hospital", "Vaccine center", "Pharmacy"])
 
+pharma = np.array(["Pfizer", "Astrazeneca", "Moderna", "J&J"])
+
+type_of_vaccine = np.array(["mRNA", "viral vector"])
+
 doctors = []
 institutions = []
 people = []
@@ -51,7 +55,7 @@ def get_database():
         client = MongoClient(connection_string)
 
     # Create the database for our example (we will use the same database throughout the tutorial
-    return client['Coviddi2']
+    return client['Final']
 
 
 class Doctor:
@@ -70,7 +74,7 @@ class Doctor:
         self.surname = surname
         self.birthdate = date
         self.mail = mail
-        self.role = "medico"
+        self.role = random.choice(roles)
         self.telephone = telephone
 
         cf = name[0] + name[1] + name[2] + surname[0] + surname[1] + surname[2] + date[2] + date[3] + random.choice(
@@ -249,14 +253,13 @@ def coll_vacc(db):
 
     vaccination = {
         "date_performed": date,
-        #"duration": 1,
         "expiration_date": date + timedelta(days=30),
         "place": "Hub n." + str(random.randint(1, 1000)),
         "valid": bool(1),
 
         "VACCINE": {
-            "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
-            "type": random.choice(["mRNA", "viral vector"]),
+            "pharma": random.choice(pharma),
+            "type": random.choice(type_of_vaccine),
             "batch": str(random.randint(1, 1000000)),
             "production_date": production_date
         },
@@ -265,7 +268,6 @@ def coll_vacc(db):
     }
     vaccinations.append(vaccination)
 
-    # ottimizzabile
     nextdate = date + timedelta(days=30)
     for i in range(n_doses - 1):
         randinst = random.choice(institutions)
@@ -274,14 +276,13 @@ def coll_vacc(db):
 
         vaccination2 = {
             "date_performed": nextdate,
-            #"duration": 6,
             "expiration_date": date + timedelta(days=180),
             "place": "Hub n." + str(random.randint(1, 1000)),
             "valid": bool(random.randint(0, 1)),
 
             "VACCINE": {
-                "pharma": random.choice(["Pfizer", "Astrazeneca", "Moderna", "J&J"]),
-                "type": random.choice(["mRNA", "viral vector"]),
+                "pharma": random.choice(pharma),
+                "type": random.choice(type_of_vaccine),
                 "batch": str(random.randint(1, 1000000)),
                 "production_date": production_date
             },
@@ -295,7 +296,6 @@ def coll_vacc(db):
     return vaccinations
 
 
-# unvaccinated vale 1 se non è vaccinato e lo sommo al numero di test cpsì che ce ne sia almeno 1
 def coll_test(db):
     n_tests = random.randint(0, 10) + unvaccinated
     tests = []
@@ -317,9 +317,8 @@ def coll_test(db):
         test = {
             "place": "Test Center n." + str(random.randint(1, 1000)),
             "date_performed": date,
-            #"duration": 2,
             "expiration_date": date + timedelta(days=2),
-            "result": result,  # non mettere 0,5% ma tipo 0,1
+            "result": result,
             "valid": bool(random.randint(0, 1)),
             "Doctor": working_doctors(db),
             "Institution": inst
@@ -336,7 +335,6 @@ def generate_certificate(quantity, db):
 
     # for each person in the database
     for i in range(quantity):
-        # pers = random.choice(people)
 
         item = {
             "PERSON": coll_person(people[i]),
