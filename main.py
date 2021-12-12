@@ -37,7 +37,7 @@ people = []
 start_date = datetime.strptime('2020-2-20T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 end_date = datetime.strptime('2021-12-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
-# unique for all vaccine
+# unique for all vaccines
 production_date = datetime.strptime('2020-01-14T00:00:00.000+00:00', '%Y-%m-%dT%H:%M:%S.000+00:00')
 
 unvaccinated = 0
